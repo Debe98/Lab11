@@ -7,7 +7,11 @@ package it.polito.tdp.rivers;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.rivers.model.DatiFiume;
 import it.polito.tdp.rivers.model.Model;
+import it.polito.tdp.rivers.model.River;
+import it.polito.tdp.rivers.model.Simulator;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -25,7 +29,7 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxRiver"
-    private ComboBox<?> boxRiver; // Value injected by FXMLLoader
+    private ComboBox<River> boxRiver; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtStartDate"
     private TextField txtStartDate; // Value injected by FXMLLoader
@@ -47,6 +51,35 @@ public class FXMLController {
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
+    
+    @FXML
+    void aggiornaInterfaccia(ActionEvent event) {
+    	aggiornaInterfaccia(boxRiver.getValue());
+    }
+    
+    @FXML
+    void avviaSimulazioni(ActionEvent event) {
+    	if(boxRiver.getValue() == null) {
+    		txtResult.setText("Scegli un fiume!");
+    		return;
+    	}
+    	if(txtK.getText().equals("")) {
+    		txtResult.setText("Scegli un 'k'!");
+    		return;
+    	}
+    	int k;
+    	try {
+    		String kraw = txtK.getText();
+    		k = Integer.parseInt(kraw.trim());
+    	} catch (Exception e) {
+			txtResult.setText("'k' inserito non valido!");
+			return;
+		}
+    	txtResult.setText("ok "+k);
+    	Object[] result  = model.simulazione(boxRiver.getValue(), k);
+    	txtResult.setText("Giorni senza irrigazione minima: "+result[0]);
+    	txtResult.appendText(String.format("\nOccupazione Media: %.2f%%", result[1]));
+    }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
     void initialize() {
@@ -62,5 +95,23 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	boxRiver.getItems().addAll(model.getRivers());
+    	/*
+    	try {
+    		boxRiver.setValue(boxRiver.getItems().get(0));
+    		aggiornaInterfaccia(boxRiver.getItems().get(0));
+    	}
+    	catch (Exception e) {
+			txtResult.setText("Nessun fiume trovato");
+		}
+		*/
+    }
+    
+    public void aggiornaInterfaccia (River river) {
+    	DatiFiume dati = model.getDatiFiume(river);
+		txtStartDate.setText(dati.getUltimaMisurazione()+"");
+		txtEndDate.setText(dati.getUltimaMisurazione()+"");
+		txtFMed.setText(String.format("%.2f", dati.getFlussoMedio()));
+		txtNumMeasurements.setText(dati.getTotmisurazioni()+"");
     }
 }
